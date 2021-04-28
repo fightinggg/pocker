@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <ostream>
 #include <vector>
 #include "./Param.hpp"
 
@@ -12,8 +11,58 @@ private:
     bool tty;
     bool interactive;
     bool detach;
+    int memory;
+    int memorySwap;
+    double cpus;
     string image;
     std::vector<string> exec;
+
+    string containerId;
+    string containerName;
+
+public:
+    const string &getContainerId() const {
+        return containerId;
+    }
+
+    void setContainerId(const string &containerId) {
+        RunParam::containerId = containerId;
+    }
+
+    const string &getContainerName() const {
+        return containerName;
+    }
+
+    void setContainerName(const string &containerName) {
+        RunParam::containerName = containerName;
+    }
+
+
+public:
+    int getMemory() const {
+        return memory;
+    }
+
+    void setMemory(int memory) {
+        RunParam::memory = memory;
+    }
+
+    int getMemorySwap() const {
+        return memorySwap;
+    }
+
+    void setMemorySwap(int memorySwap) {
+        RunParam::memorySwap = memorySwap;
+    }
+
+    double getCpus() const {
+        return cpus;
+    }
+
+    void setCpus(double cpus) {
+        RunParam::cpus = cpus;
+    }
+
 public:
     bool isTty() const {
         return tty;
@@ -55,9 +104,18 @@ public:
         RunParam::exec = exec;
     }
 
-    friend ostream &operator<<(ostream &os, const RunParam &param) {
-        os << "tty: " << param.tty << " interactive: " << param.interactive << " detach: " << param.detach << " image: "
-           << param.image << " execSize: " << param.exec.size();
-        return os;
+    string toString() {
+        return string("RunParam:: ")
+               + "tty: " + std::to_string(tty) + ", "
+               + "interactive: " + std::to_string(interactive) + ", "
+               + "detach: " + std::to_string(detach) + ", "
+               + "memory: " + std::to_string(memory) + ", "
+               + "memorySwap: " + std::to_string(memorySwap) + ", "
+               + "cpus: " + std::to_string(cpus) + ", "
+               + "image: " + image + ","
+               + "containerId: " + containerId + ","
+               + "containerName: " + containerName + "";
+
     }
+
 };

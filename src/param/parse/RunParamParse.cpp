@@ -1,12 +1,23 @@
 #include "RunParamParse.hpp"
 #include "cmdline.hpp"
+#include "ParseUtils.hpp"
+#include "../../utils/UuidUtils.hpp"
 
 RunParam *RunParamParse::parse(int argc, char *argv[]) {
     cmdline::parser run;
 
-    run.add("interactive", 'i', "interactive");
-    run.add("tty", 't', "tty");
-    run.add("detach", 'd', "detach");
+    run.add("interactive", 'i', "Keep STDIN open even if not attached");
+    run.add("tty", 't', "Allocate a pseudo-TTY");
+    run.add("detach", 'd', "Run container in background and print container ID");
+
+    run.add<string>("memory", 'm', "Memory limit");
+    run.add<string>("memory-swap", 0, "Swap limit equal to memory plus swap: '-1' to enable unlimited swap");
+
+    run.add<string>("name", 0, "Assign a name to the containe", false);
+
+
+    run.add<double>("cpus", 0, "Number of CPUs");
+
     run.footer("image...");
 
     run.parse_check(argc, argv);
@@ -16,6 +27,25 @@ RunParam *RunParamParse::parse(int argc, char *argv[]) {
     runParam->setDetach(run.exist("detach"));
     runParam->setInteractive(run.exist("interactive"));
     runParam->setTty(run.exist("tty"));
+
+    // memory
+    string memory = run.get<string>("memory");
+    runParam->setMemory(ParseUtils::parseMemory(memory));
+
+    // memory swap
+    string memorySwap = run.get<string>("memory-swap");
+    runParam->setMemorySwap(ParseUtils::parseMemory(memorySwap));
+
+    // cpu
+    double cpus = run.get<double>("cpus");
+    runParam->setCpus(cpus);
+
+    // name
+    string name = run.get<string>("name");
+    runParam->setContainerName(name);
+
+    // id
+    runParam->setContainerId(uuid::generate_uuid_v4());
 
     vector<string> rest = run.rest();
 
@@ -29,6 +59,8 @@ RunParam *RunParamParse::parse(int argc, char *argv[]) {
     rest.erase(rest.begin());
     rest.erase(rest.begin());
     runParam->setExec(rest);
+
+    cout << runParam->toString() << endl;
 
     return runParam;
 }
