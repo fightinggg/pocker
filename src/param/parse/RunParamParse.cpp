@@ -11,16 +11,17 @@ RunParam *RunParamParse::parse(int argc, char *argv[]) {
   run.add("tty", 't', "Allocate a pseudo-TTY");
   run.add("detach", 'd', "Run container in background and print container ID");
 
-  run.add<string>("memory", 'm', "Memory limit");
+  run.add<string>("memory", 'm', "Memory limit", false, "10m");
   run.add<string>(
       "memory-swap", 0,
-      "Swap limit equal to memory plus swap: '-1' to enable unlimited swap");
+      "Swap limit equal to memory plus swap: '-1' to enable unlimited swap",
+      false, "10m");
 
   run.add<string>("name", 0, "Assign a name to the containe", false);
 
-  run.add<double>("cpus", 0, "Number of CPUs");
+  run.add<double>("cpus", 0, "Number of CPUs", false, 1);
 
-  run.footer("image...");
+  run.footer("image [image args]");
 
   run.parse_check(argc, argv);
 

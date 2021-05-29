@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.11)
 project(pocker)
 
 # 虚拟的linux头文件
-include_directories(/Users/s/src/linux-include/)
+# include_directories(/Users/s/src/linux-include/)
 
 set(SRC
         src/param/parse/ParamParse.cpp
@@ -10,6 +10,7 @@ set(SRC
         src/main.cpp
         )
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
 set(CMAKE_CXX_STANDARD 14)
 

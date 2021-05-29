@@ -6,11 +6,13 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
 #include <iostream>
 
 #include "./param/bean/RunParam.hpp"
 #include "./param/parse/ParamParse.hpp"
+#include "format/String.hpp"
+#include "format/Vector.hpp"
+#include "utils/StringUtils.hpp"
 
 using namespace std;
 #define FIBER_STACK 8192
@@ -18,34 +20,37 @@ using namespace std;
 void prepareContainer(RunParam *runParam) {
   // create cpu subsystem
   char cmd[128];
-  string cmdList[] = {"cd /sys/fs/cgroup/cpu ", "&& mkdir %s ", "&& cd %s ",
-                      "&& echo %d > cpu.cfs_quota_us ",
-                      "&& echo 50000 > cpu.cfs_period_us "};
-  string cmdOrigin;
-  for (string &s : cmdList) {
-    cmdOrigin += s;
-  }
-  sprintf(cmd, cmdOrigin.data(), runParam->getContainerId().data(),
-          runParam->getContainerId().data(), int(runParam->getCpus() * 50000));
+  Vector<String> cmdList = {"cd /sys/fs/cgroup/cpu ", "&& mkdir %s ",
+                            "&& cd %s ", "&& echo %d > cpu.cfs_quota_us ",
+                            "&& echo 50000 > cpu.cfs_period_us "};
+  sprintf(cmd, StringUtils::join(cmdList).data(),
+          runParam->getContainerId().data(), runParam->getContainerId().data(),
+          int(runParam->getCpus() * 50000));
+  system(cmd);
+
+  // create memory subsystem
+  cmdList = {"cd /sys/fs/cgroup/memory ", "&& mkdir %s ",
+                            "&& cd %s ", "&& echo %d > memory.limit_in_bytes ",
+                            "&& echo %d > memory.memsw.limit_in_bytes "};
+  sprintf(cmd, StringUtils::join(cmdList).data(),
+          runParam->getContainerId().data(), runParam->getContainerId().data(),
+          int(runParam->getMemory()), int(runParam->getMemorySwap()));
   system(cmd);
 }
 
 int doContainer(void *param) {
   auto *runParam = (RunParam *)param;
 
-  // add cpu subsystem
+  // use cpu subsystem
   char cmd[128];
   sprintf(cmd, "echo %d >> /sys/fs/cgroup/cpu/%s/tasks", getpid(),
           runParam->getContainerId().data());
   system(cmd);
 
-  int cur = time(0);
-  int a = 1;
-  for (int i = 0; i < 1e9; i++) {
-    a += i;
-  }
-  cout << a << endl;
-  cout << "cost: " << time(0) - cur << endl;
+  // use memory subsysem
+  sprintf(cmd, "echo %d >> /sys/fs/cgroup/memory/%s/tasks", getpid(),
+          runParam->getContainerId().data());
+  system(cmd);
 
   // mount proc system
   if (mount("proc", "/proc", "proc", MS_NOEXEC | MS_NOSUID | MS_NODEV, NULL)) {
@@ -54,7 +59,7 @@ int doContainer(void *param) {
   }
 
   if (runParam->getImage() == "centos") {
-    vector<string> v = runParam->getExec();
+    vector<String> v = runParam->getExec();
 
     switch (v.size()) {
       case 0:
@@ -96,5 +101,5 @@ int main(int argc, char *argv[]) {
   int pid = clone(doContainer, (char *)stack + FIBER_STACK, containerFlag,
                   param);  //创建子线程
   waitpid(pid, NULL, 0);
-  cout << "parent exit " << endl;
+  cout << "container exit, thanks for using pocker " << endl;
 }

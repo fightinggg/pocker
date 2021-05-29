@@ -12,9 +12,9 @@ class RunParam : public Param {
   bool tty;
   bool interactive;
   bool detach;
-  int memory;
-  int memorySwap;
-  double cpus;
+  int memory;      // bytes
+  int memorySwap;  // bytes
+  double cpus;     // core numbers
   string image;
   std::vector<string> exec;
 
