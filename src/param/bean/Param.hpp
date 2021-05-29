@@ -2,18 +2,12 @@
 
 #include "./ParamType.hpp"
 
+class Param {
+ private:
+  ParamType paramType;
 
-class Param
-{
-private:
-    ParamType paramType;
+ public:
+  ParamType getParamType() { return paramType; }
 
-public:
-   ParamType getParamType(){
-       return paramType;
-   }
-
-   void setParamType(ParamType paramType){
-       this->paramType = paramType;
-   }
+  void setParamType(ParamType paramType) { this->paramType = paramType; }
 };

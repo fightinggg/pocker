@@ -1,4 +1,2 @@
 
-enum ParamType{
-    RunParamType
-};
+enum ParamType { RunParamType };
