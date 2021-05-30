@@ -10,5 +10,5 @@ https://fightinggg.github.io/QRN6OO.html
 
 # Version Document
 [3.1](https://fightinggg.github.io/QRN6OO.html#3-1%E7%89%88%E6%9C%AC)
-[3.2-cpu](https://fightinggg.github.io/QRN6OO.html#3.2-cpu%E7%89%88%E6%9C%AC)
-[3.2-mem](https://fightinggg.github.io/QRN6OO.html#3.2-mem%E7%89%88%E6%9C%AC)
+[3.2-cpu](https://fightinggg.github.io/QRN6OO.html#3-2-cpu%E7%89%88%E6%9C%AC)
+[3.2-mem](https://fightinggg.github.io/QRN6OO.html#3-2-mem%E7%89%88%E6%9C%AC)
