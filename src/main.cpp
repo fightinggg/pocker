@@ -83,6 +83,13 @@ void prepareContainer(RunParam *runParam) {
 int doContainer(void *param) {
   auto *runParam = (RunParam *)param;
 
+  // mount proc system, then container could not find others process
+  // CLONE_NEWUSER TODO BUG??
+  if (mount("proc", "/proc", "proc", MS_NOEXEC | MS_NOSUID | MS_NODEV, NULL)) {
+    cerr << "mount proc error: " << getErr() << endl;
+    exit(-1);
+  }
+
   // use cpu subsystem
   char cmd[128];
   sprintf(cmd, "echo %d >> /sys/fs/cgroup/cpu/%s/tasks", getpid(),
@@ -134,17 +141,16 @@ int doContainer(void *param) {
   }
 
   // mount proc system, then container could not find others process
-  // TODO BUG??
-  // if (mount("proc", "/proc", "proc", MS_NOEXEC | MS_NOSUID | MS_NODEV, NULL))
-  // {
-  //   cerr << "mount proc error: " << getErr() << endl;
-  //   exit(-1);
-  // }
+  // CLONE_NEWUSER TODO BUG??
+  if (mount("proc", "/proc", "proc", MS_NOEXEC | MS_NOSUID | MS_NODEV, NULL)) {
+    cerr << "mount proc error: " << getErr() << endl;
+    exit(-1);
+  }
 
   if (runParam->getImage() == "busybox") {
     vector<String> v = runParam->getExec();
     cout << "container begin: " << StringUtils::join(v, " ") << endl;
-    return system(StringUtils::join(v, " ").data());
+    return execl("/bin/sh", "sh", "-c", StringUtils::join(v, " ").data(), NULL);
   } else {
     cerr << "could not find image '" << runParam->getImage()
          << "', you can use image 'busybox'" << endl;
@@ -158,7 +164,7 @@ int main(int argc, char *argv[]) {
   void *stack = malloc(FIBER_STACK);  //为子进程申请系统堆栈
 
   int containerFlag = SIGCHLD | CLONE_NEWUTS | CLONE_NEWPID | CLONE_NEWNS |
-                      CLONE_NEWNET | CLONE_NEWIPC | CLONE_NEWUSER;
+                      CLONE_NEWNET | CLONE_NEWIPC;  // CLONE_NEWUSER
 
   prepareContainer((RunParam *)param);
   int pid = clone(doContainer, (char *)stack + FIBER_STACK, containerFlag,
