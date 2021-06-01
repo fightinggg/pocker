@@ -23,8 +23,35 @@
 #include "utils/StringUtils.hpp"
 
 using namespace std;
-#define FIBER_STACK 81920
-String busyBoxDir = "/root/src/busybox";
+#define FIBER_STACK 8192
+
+String getDirectory() {
+  char abs_path[1024];
+  //获取可执行程序的绝对路径
+  int cnt = readlink("/proc/self/exe", abs_path, 1024);
+  if (cnt < 0 || cnt >= 1024) {
+    return NULL;
+  }
+
+  //最后一个'/' 后面是可执行程序名，去掉devel/lib/m100/exe，只保留前面部分路径
+  for (int i = cnt; i >= 0; --i) {
+    if (abs_path[i] == '/') {
+      abs_path[i] = '\0';
+      break;
+    }
+  }
+  for (int i = cnt; i >= 0; --i) {
+    if (abs_path[i] == '/') {
+      abs_path[i] = '\0';
+      break;
+    }
+  }
+  return String(abs_path);
+}
+
+String appDir = getDirectory();
+String imagesDir = appDir + "/data/images";
+String busyBoxDir = imagesDir + "/busybox";
 
 String getErr() {
   char s[100];
@@ -67,38 +94,32 @@ int doContainer(void *param) {
           runParam->getContainerId().data());
   system(cmd);
 
-  // mount proc system, then container could not find others process
-  if (mount("proc", "/proc", "proc", MS_NOEXEC | MS_NOSUID | MS_NODEV, NULL)) {
-    cerr << "mount proc error" << endl;
-    exit(-1);
-  }
-
   // mount busyBox 1. change workdir
   if (chdir(busyBoxDir.data())) {
-    cerr << "chdir to busyBoxDir error" << endl;
+    cerr << "chdir to busyBoxDir error" << getErr() << endl;
     exit(-1);
   }
   // mount busyBox 2. mount busyBox
   if (mount(busyBoxDir.data(), busyBoxDir.data(), "bind", MS_BIND | MS_REC,
             NULL)) {
-    cerr << "mount busyBox error" << endl;
+    cerr << "mount busyBox error" << getErr() << endl;
     exit(-1);
   }
   String privotRootName = ".pivot_root" + runParam->getContainerId();
   String privotRoot = busyBoxDir + "/" + privotRootName;
   // mount busyBox 3. mkdir put_old
-  if (mkdir(privotRoot.data(), S_IRWXU | S_IRWXG | S_IRWXO)) {
-    cerr << "mkdir privotRoot error" << endl;
+  if (mkdir(privotRoot.data(), 0777)) {
+    cerr << "mkdir privotRoot error" << getErr() << endl;
     exit(-1);
   }
   // mount busyBox 4. privot_root()
   if (syscall(SYS_pivot_root, busyBoxDir.data(), privotRoot.data())) {
-    cerr << "privot_root error" << endl;
+    cerr << "privot_root error" << getErr() << endl;
     exit(-1);
   }
   // mount busyBox 5. to dir /
   if (chdir("/")) {
-    cerr << "chdir to / error" << endl;
+    cerr << "chdir to / error" << getErr() << endl;
     exit(-1);
   }
   // mount busyBox 6. unmount .privot_root
@@ -111,6 +132,14 @@ int doContainer(void *param) {
     cerr << "rm .pivot_root  error " << getErr() << endl;
     exit(-1);
   }
+
+  // mount proc system, then container could not find others process
+  // TODO BUG??
+  // if (mount("proc", "/proc", "proc", MS_NOEXEC | MS_NOSUID | MS_NODEV, NULL))
+  // {
+  //   cerr << "mount proc error: " << getErr() << endl;
+  //   exit(-1);
+  // }
 
   if (runParam->getImage() == "busybox") {
     vector<String> v = runParam->getExec();
@@ -140,13 +169,13 @@ int main(int argc, char *argv[]) {
     exit(-1);
   }
   if (WIFEXITED(sonStatus)) {
-    printf("container exited, status=%d\n", WEXITSTATUS(sonStatus));
+    printf("container exited, status=%d, ", WEXITSTATUS(sonStatus));
   } else if (WIFSIGNALED(sonStatus)) {
-    printf("container killed by signal %d\n", WTERMSIG(sonStatus));
+    printf("container killed by signal %d, ", WTERMSIG(sonStatus));
   } else if (WIFSTOPPED(sonStatus)) {
-    printf("container stopped by signal %d\n", WSTOPSIG(sonStatus));
+    printf("container stopped by signal %d, ", WSTOPSIG(sonStatus));
   } else if (WIFCONTINUED(sonStatus)) {
-    printf("container continued\n");
+    printf("container continued, ");
   }
   cout << " thanks for using pocker" << endl;
 }
