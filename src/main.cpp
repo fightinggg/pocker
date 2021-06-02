@@ -52,6 +52,7 @@ String getDirectory() {
 String appDir = getDirectory();
 String imagesDir = appDir + "/data/images";
 String busyBoxDir = imagesDir + "/busybox";
+String containerDir = appDir + "/data/containers";
 
 String getErr() {
   char s[100];
@@ -101,26 +102,77 @@ int doContainer(void *param) {
           runParam->getContainerId().data());
   system(cmd);
 
+  String containerDataDir = containerDir + "/" + runParam->getContainerId();
+  if (mkdir(containerDataDir.data(), 0777)) {
+    cerr << " mkdir " << containerDataDir << " error" << endl;
+    exit(-1);
+  }
+
+  String diskFile = containerDataDir + "/disk.img";
+  String containerDisk = containerDataDir + "/disk";
+
+  // create container disk 1. create disk
+  sprintf(cmd, "dd if=/dev/zero bs=1M count=20 of=%s", diskFile.data());
+  system(cmd);
+
+  // 2. init file system
+  if (system(("mkfs.ext4 " + diskFile).data())) {
+    cerr << "mkfs error " << diskFile << endl;
+    exit(-1);
+  }
+
+  mkdir(containerDisk.data(), 0777);
+
+  // 3. mount container disk system
+  sprintf(cmd, "mount %s %s", diskFile.data(), containerDisk.data());
+  printf("mount upper: %s\n", cmd);
+  if (system(cmd)) {
+    cerr << "mount " << diskFile << " error" << endl;
+    exit(-1);
+  }
+
+  String containerUpper = containerDisk + "/upper";
+  String containerTmp = containerDisk + "/tmp";
+  String containerMerge = containerDisk + "/overlay";
+
+  mkdir(containerUpper.data(), 0777);
+  mkdir(containerTmp.data(), 0777);
+  mkdir(containerMerge.data(), 0777);
+
+  // system(("ls -al " + containerDisk).data());
+
+  // 4. build overlay
+  sprintf(cmd,
+          "mount -t overlay overlay "
+          "-olowerdir=%s,upperdir=%s,workdir=%s %s",
+          busyBoxDir.data(), containerUpper.data(), containerTmp.data(),
+          containerMerge.data());
+  printf("do: %s\n", cmd);
+  if (system(cmd)) {
+    cerr << "build overlay error " << getErr() << endl;
+    exit(-1);
+  }
+
   // mount busyBox 1. change workdir
-  if (chdir(busyBoxDir.data())) {
-    cerr << "chdir to busyBoxDir error" << getErr() << endl;
+  if (chdir(containerMerge.data())) {
+    cerr << "chdir to containerMerge error" << getErr() << endl;
     exit(-1);
   }
   // mount busyBox 2. mount busyBox
-  if (mount(busyBoxDir.data(), busyBoxDir.data(), "bind", MS_BIND | MS_REC,
-            NULL)) {
-    cerr << "mount busyBox error" << getErr() << endl;
-    exit(-1);
-  }
+  // if (mount(busyBoxDir.data(), busyBoxDir.data(), "bind", MS_BIND | MS_REC,
+  //           NULL)) {
+  //   cerr << "mount busyBox error" << getErr() << endl;
+  //   exit(-1);
+  // }
   String privotRootName = ".pivot_root" + runParam->getContainerId();
-  String privotRoot = busyBoxDir + "/" + privotRootName;
+  String privotRoot = containerMerge + "/" + privotRootName;
   // mount busyBox 3. mkdir put_old
   if (mkdir(privotRoot.data(), 0777)) {
     cerr << "mkdir privotRoot error" << getErr() << endl;
     exit(-1);
   }
   // mount busyBox 4. privot_root()
-  if (syscall(SYS_pivot_root, busyBoxDir.data(), privotRoot.data())) {
+  if (syscall(SYS_pivot_root, containerMerge.data(), privotRoot.data())) {
     cerr << "privot_root error" << getErr() << endl;
     exit(-1);
   }

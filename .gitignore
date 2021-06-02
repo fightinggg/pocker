@@ -3,4 +3,3 @@
 cmake-build-debug
 build/
 **/.DS_Store
-data/images

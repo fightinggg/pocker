@@ -14,7 +14,10 @@ class RunParam : public Param {
   bool detach;
   int memory;      // bytes
   int memorySwap;  // bytes
-  double cpus;     // core numbers
+  int disk;
+
+  // Mb
+  double cpus;  // core numbers
   string image;
   std::vector<string> exec;
 
@@ -46,6 +49,10 @@ class RunParam : public Param {
   double getCpus() const { return cpus; }
 
   void setCpus(double cpus) { RunParam::cpus = cpus; }
+  
+  int getDisk() const { return disk; }
+
+  void setDisk(int disk) { this->disk = disk; }
 
  public:
   bool isTty() const { return tty; }

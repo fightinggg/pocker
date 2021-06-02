@@ -6,6 +6,7 @@ RUN cmake .
 RUN make
 
 FROM centos:8
+RUN yum install e4fsprogs -y
 COPY --from=0 /app/pocker /usr/local/pocker/bin/pocker
 COPY --from=0 /app/data/ /usr/local/pocker/data/
 RUN mkdir -p /usr/local/pocker/data/images/busybox \
