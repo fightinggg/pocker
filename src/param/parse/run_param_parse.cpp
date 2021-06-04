@@ -4,7 +4,7 @@
 #include "cmdline.hpp"
 #include "parse_utils.hpp"
 
-RunParam *RunParamParse::parse(int argc, char *argv[]) {
+run_param *run_param_parse::parse(int argc, char *argv[]) {
   cmdline::parser run;
 
   run.add("interactive", 'i', "Keep STDIN open even if not attached");
@@ -25,30 +25,28 @@ RunParam *RunParamParse::parse(int argc, char *argv[]) {
 
   run.parse_check(argc, argv);
 
-  auto *runParam = new RunParam();
+  auto *runParam = new run_param();
 
-  runParam->setDetach(run.exist("detach"));
-  runParam->setInteractive(run.exist("interactive"));
-  runParam->setTty(run.exist("tty"));
+  runParam->detach = run.exist("detach");
+  runParam->interactive = run.exist("interactive");
+  runParam->tty = run.exist("tty");
 
   // memory
   string memory = run.get<string>("memory");
-  runParam->setMemory(ParseUtils::parseMemory(memory));
+  runParam->memory = parse_utils::parse_memory(memory);
 
   // memory swap
-  string memorySwap = run.get<string>("memory-swap");
-  runParam->setMemorySwap(ParseUtils::parseMemory(memorySwap));
+  string memory_swap = run.get<string>("memory-swap");
+  runParam->memory_swap = parse_utils::parse_memory(memory_swap);
 
   // cpu
-  double cpus = run.get<double>("cpus");
-  runParam->setCpus(cpus);
+  runParam->cpus = run.get<double>("cpus");
 
   // name
-  string name = run.get<string>("name");
-  runParam->setContainerName(name);
+  runParam->name = run.get<string>("name");
 
   // id
-  runParam->setContainerId(uuid::generate_uuid_v4());
+  runParam->id = uuid::generate_uuid_v4();
 
   vector<string> rest = run.rest();
 
@@ -57,11 +55,11 @@ RunParam *RunParamParse::parse(int argc, char *argv[]) {
     cerr << "you should add image name" << endl;
     exit(-1);
   }
-  runParam->setImage(rest[1]);
+  runParam->image = rest[1];
 
   rest.erase(rest.begin());
   rest.erase(rest.begin());
-  runParam->setExec(rest);
+  runParam->exec = rest;
 
   cout << runParam->tostring() << endl;
 

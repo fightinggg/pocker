@@ -3,9 +3,9 @@
 
 #include "../../utils/obj_utils.hpp"
 
-class ParseUtils {
+class parse_utils {
  public:
-  static int parseMemory(std::string memory) {
+  static int parse_memory(std::string memory) {
     if (memory.back() != 'm') {
       std::cerr << "error flag memory: " + memory << std::endl;
       std::cerr << "please use flag '--memory 10m' " << std::endl;

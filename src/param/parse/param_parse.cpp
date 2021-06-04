@@ -4,7 +4,7 @@
 
 #include "./run_param_parse.hpp"
 
-Param *ParamParse::parse(int argc, char *argv[]) {
+param *param_parse::parse(int argc, char *argv[]) {
   if (argc == 1) {
     std::cerr << "please use: " << argv[0] << " run --help" << std::endl;
     exit(-1);

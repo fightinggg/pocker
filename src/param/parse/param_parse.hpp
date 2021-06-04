@@ -2,5 +2,5 @@
 
 class ParamParse {
  public:
-  static Param *parse(int argc, char *argv[]);
+  static param *parse(int argc, char *argv[]);
 };

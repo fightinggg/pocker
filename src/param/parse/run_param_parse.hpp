@@ -1,6 +1,6 @@
 #include "../bean/run_param.hpp"
 
-class RunParamParse {
+class run_param_parse {
  public:
-  static RunParam *parse(int argc, char *argv[]);
+  static run_param *parse(int argc, char *argv[]);
 };

@@ -1,2 +1,2 @@
 
-enum param_type { RunParamType };
+enum param_type { run_param_type };

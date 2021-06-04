@@ -1,8 +1,8 @@
 #include <string>
 
-class ObjUtils {
+class obj_utils {
  public:
-  static int stringToInt(std::string s) {
+  static int string_to_int(std::string s) {
     int res = 0;
     for (int i = 0; i < s.size(); i++) {
       res = res * 10 + s[i] - '0';

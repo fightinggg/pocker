@@ -1,5 +1,5 @@
 
-class stringUtils {
+class string_utils {
  public:
   static string join(const vector<string>& strings, string split) {
     string res;
