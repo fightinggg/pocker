@@ -1,8 +1,8 @@
-#include "RunParamParse.hpp"
+#include "run_param_parse.hpp"
 
-#include "../../utils/UuidUtils.hpp"
-#include "ParseUtils.hpp"
+#include "../../utils/uuid_utils.hpp"
 #include "cmdline.hpp"
+#include "parse_utils.hpp"
 
 RunParam *RunParamParse::parse(int argc, char *argv[]) {
   cmdline::parser run;
@@ -63,7 +63,7 @@ RunParam *RunParamParse::parse(int argc, char *argv[]) {
   rest.erase(rest.begin());
   runParam->setExec(rest);
 
-  cout << runParam->toString() << endl;
+  cout << runParam->tostring() << endl;
 
   return runParam;
 }

@@ -1,4 +1,4 @@
-#include "../bean/RunParam.hpp"
+#include "../bean/run_param.hpp"
 
 class RunParamParse {
  public:

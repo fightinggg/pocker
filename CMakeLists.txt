@@ -1,12 +1,9 @@
 cmake_minimum_required(VERSION 3.11)
 project(pocker)
 
-# 虚拟的linux头文件
-# include_directories(/Users/s/src/linux-include/)
-
 set(SRC
-        src/param/parse/ParamParse.cpp
-        src/param/parse/RunParamParse.cpp
+        src/param/parse/param_parse.cpp
+        src/param/parse/run_param_parse.cpp
         src/main.cpp
         )
 

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#include "../../utils/ObjUtils.hpp"
+#include "../../utils/obj_utils.hpp"
 
 class ParseUtils {
  public:

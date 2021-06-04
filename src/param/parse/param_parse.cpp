@@ -1,8 +1,8 @@
-#include "./ParamParse.hpp"
+#include "./param_parse.hpp"
 
 #include <iostream>
 
-#include "./RunParamParse.hpp"
+#include "./run_param_parse.hpp"
 
 Param *ParamParse::parse(int argc, char *argv[]) {
   if (argc == 1) {

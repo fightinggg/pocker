@@ -1,4 +1,4 @@
-#include "../bean/Param.hpp"
+#include "../bean/param.hpp"
 
 class ParamParse {
  public:

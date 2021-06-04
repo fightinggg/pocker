@@ -1,11 +1,30 @@
 #pragma once
 
-#include <string>
 #include <vector>
+#include <string>
 
-#include "./Param.hpp"
+#include "./param.hpp"
 
 using namespace std;
+
+class VolumeMapping {
+  string from;
+  int type;
+  string to;
+
+ public:
+  string getFrom() const { return from; }
+
+  void setFrom(string from) { from = from; }
+
+  string getTo() const { return to; }
+
+  void setTo(string to) { to = to; }
+
+  int getType() const { return type; }
+
+  void setType(int type) { type = type; }
+};
 
 class RunParam : public Param {
  private:
@@ -19,7 +38,8 @@ class RunParam : public Param {
   // Mb
   double cpus;  // core numbers
   string image;
-  std::vector<string> exec;
+  vector<string> exec;
+  vector<VolumeMapping> volumes;
 
   string containerId;
   string containerName;
@@ -49,7 +69,7 @@ class RunParam : public Param {
   double getCpus() const { return cpus; }
 
   void setCpus(double cpus) { RunParam::cpus = cpus; }
-  
+
   int getDisk() const { return disk; }
 
   void setDisk(int disk) { this->disk = disk; }
@@ -75,7 +95,7 @@ class RunParam : public Param {
 
   void setExec(const vector<string> &exec) { RunParam::exec = exec; }
 
-  string toString() {
+  string tostring() {
     return string("RunParam:: ") + "tty: " + std::to_string(tty) + ", " +
            "interactive: " + std::to_string(interactive) + ", " +
            "detach: " + std::to_string(detach) + ", " +

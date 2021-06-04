@@ -15,17 +15,16 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
+#include <vector>
 
-#include "./param/bean/RunParam.hpp"
-#include "./param/parse/ParamParse.hpp"
-#include "format/String.hpp"
-#include "format/Vector.hpp"
-#include "utils/StringUtils.hpp"
+#include "./param/bean/run_param.hpp"
+#include "./param/parse/param_parse.hpp"
+#include "utils/string_utils.hpp"
 
 using namespace std;
 #define FIBER_STACK 8192
 
-String getDirectory() {
+string getDirectory() {
   char abs_path[1024];
   //获取可执行程序的绝对路径
   int cnt = readlink("/proc/self/exe", abs_path, 1024);
@@ -46,27 +45,27 @@ String getDirectory() {
       break;
     }
   }
-  return String(abs_path);
+  return string(abs_path);
 }
 
-String appDir = getDirectory();
-String imagesDir = appDir + "/data/images";
-String busyBoxDir = imagesDir + "/busybox";
-String containerDir = appDir + "/data/containers";
+string appDir = getDirectory();
+string imagesDir = appDir + "/data/images";
+string busyBoxDir = imagesDir + "/busybox";
+string containerDir = appDir + "/data/containers";
 
-String getErr() {
+string getErr() {
   char s[100];
   sprintf(s, "(%d)%s", errno, strerror(errno));
-  return String(s);
+  return string(s);
 }
 
 void prepareContainer(RunParam *runParam) {
   // create cpu subsystem
   char cmd[128];
-  Vector<String> cmdList = {"cd /sys/fs/cgroup/cpu ", "&& mkdir %s ",
+  vector<string> cmdList = {"cd /sys/fs/cgroup/cpu ", "&& mkdir %s ",
                             "&& cd %s ", "&& echo %d > cpu.cfs_quota_us ",
                             "&& echo 50000 > cpu.cfs_period_us "};
-  sprintf(cmd, StringUtils::join(cmdList, " ").data(),
+  sprintf(cmd, stringUtils::join(cmdList, " ").data(),
           runParam->getContainerId().data(), runParam->getContainerId().data(),
           int(runParam->getCpus() * 50000));
   system(cmd);
@@ -75,14 +74,14 @@ void prepareContainer(RunParam *runParam) {
   cmdList = {"cd /sys/fs/cgroup/memory ", "&& mkdir %s ", "&& cd %s ",
              "&& echo %d > memory.limit_in_bytes ",
              "&& echo %d > memory.memsw.limit_in_bytes "};
-  sprintf(cmd, StringUtils::join(cmdList, " ").data(),
+  sprintf(cmd, stringUtils::join(cmdList, " ").data(),
           runParam->getContainerId().data(), runParam->getContainerId().data(),
           int(runParam->getMemory()), int(runParam->getMemorySwap()));
   system(cmd);
 }
 
-int doContainer(void *param) {
-  auto *runParam = (RunParam *)param;
+int doContainer(void *arg_param) {
+  auto *runParam = (RunParam *)arg_param;
 
   // mount proc system, then container could not find others process
   // CLONE_NEWUSER TODO BUG??
@@ -102,14 +101,14 @@ int doContainer(void *param) {
           runParam->getContainerId().data());
   system(cmd);
 
-  String containerDataDir = containerDir + "/" + runParam->getContainerId();
+  string containerDataDir = containerDir + "/" + runParam->getContainerId();
   if (mkdir(containerDataDir.data(), 0777)) {
     cerr << " mkdir " << containerDataDir << " error" << endl;
     exit(-1);
   }
 
-  String diskFile = containerDataDir + "/disk.img";
-  String containerDisk = containerDataDir + "/disk";
+  string diskFile = containerDataDir + "/disk.img";
+  string containerDisk = containerDataDir + "/disk";
 
   // create container disk 1. create disk
   sprintf(cmd, "dd if=/dev/zero bs=1M count=20 of=%s", diskFile.data());
@@ -131,9 +130,9 @@ int doContainer(void *param) {
     exit(-1);
   }
 
-  String containerUpper = containerDisk + "/upper";
-  String containerTmp = containerDisk + "/tmp";
-  String containerMerge = containerDisk + "/overlay";
+  string containerUpper = containerDisk + "/upper";
+  string containerTmp = containerDisk + "/tmp";
+  string containerMerge = containerDisk + "/overlay";
 
   mkdir(containerUpper.data(), 0777);
   mkdir(containerTmp.data(), 0777);
@@ -164,8 +163,8 @@ int doContainer(void *param) {
   //   cerr << "mount busyBox error" << getErr() << endl;
   //   exit(-1);
   // }
-  String privotRootName = ".pivot_root" + runParam->getContainerId();
-  String privotRoot = containerMerge + "/" + privotRootName;
+  string privotRootName = ".pivot_root" + runParam->getContainerId();
+  string privotRoot = containerMerge + "/" + privotRootName;
   // mount busyBox 3. mkdir put_old
   if (mkdir(privotRoot.data(), 0777)) {
     cerr << "mkdir privotRoot error" << getErr() << endl;
@@ -200,9 +199,9 @@ int doContainer(void *param) {
   }
 
   if (runParam->getImage() == "busybox") {
-    vector<String> v = runParam->getExec();
-    cout << "container begin: " << StringUtils::join(v, " ") << endl;
-    return execl("/bin/sh", "sh", "-c", StringUtils::join(v, " ").data(), NULL);
+    vector<string> v = runParam->getExec();
+    cout << "container begin: " << stringUtils::join(v, " ") << endl;
+    return execl("/bin/sh", "sh", "-c", stringUtils::join(v, " ").data(), NULL);
   } else {
     cerr << "could not find image '" << runParam->getImage()
          << "', you can use image 'busybox'" << endl;
@@ -211,16 +210,16 @@ int doContainer(void *param) {
 }
 
 int main(int argc, char *argv[]) {
-  Param *param = ParamParse::parse(argc, argv);
+  Param *arg_param = ParamParse::parse(argc, argv);
 
   void *stack = malloc(FIBER_STACK);  //为子进程申请系统堆栈
 
   int containerFlag = SIGCHLD | CLONE_NEWUTS | CLONE_NEWPID | CLONE_NEWNS |
                       CLONE_NEWNET | CLONE_NEWIPC;  // CLONE_NEWUSER
 
-  prepareContainer((RunParam *)param);
+  prepareContainer((RunParam *)arg_param);
   int pid = clone(doContainer, (char *)stack + FIBER_STACK, containerFlag,
-                  param);  //创建子线程
+                  arg_param);  //创建子线程
   int sonStatus;
   if (waitpid(pid, &sonStatus, 0) != pid) {
     cerr << "container error " << getErr() << endl;
