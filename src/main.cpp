@@ -59,24 +59,36 @@ string getErr() {
   return string(s);
 }
 
+void pre_umount_privot(run_param *arg_run_param, string privot_root_name) {
+  if (!arg_run_param->volumes.empty()) {
+    auto v = arg_run_param->volumes[0];
+    string src = "/" + privot_root_name + "/" + v.from;
+    system(("mkdir -p " + v.to).data());
+    if (mount(src.data(), v.to.data(), NULL, MS_BIND, NULL)) {
+      cerr << "mount " << v.from << " to " << v.to << " failed" << getErr()
+           << endl;
+      exit(-1);
+    }
+  }
+}
+
 void prepareContainer(run_param *runParam) {
   // create cpu subsystem
   char cmd[128];
   vector<string> cmdList = {"cd /sys/fs/cgroup/cpu ", "&& mkdir %s ",
                             "&& cd %s ", "&& echo %d > cpu.cfs_quota_us ",
                             "&& echo 50000 > cpu.cfs_period_us "};
-  sprintf(cmd, string_utils::join(cmdList, " ").data(),
-          runParam->id.data(), runParam->id.data(),
-          int(runParam->cpus * 50000));
+  sprintf(cmd, string_utils::join(cmdList, " ").data(), runParam->id.data(),
+          runParam->id.data(), int(runParam->cpus * 50000));
   system(cmd);
 
   // create memory subsystem
   cmdList = {"cd /sys/fs/cgroup/memory ", "&& mkdir %s ", "&& cd %s ",
              "&& echo %d > memory.limit_in_bytes ",
              "&& echo %d > memory.memsw.limit_in_bytes "};
-  sprintf(cmd, string_utils::join(cmdList, " ").data(),
-          runParam->id.data(), runParam->id.data(),
-          int(runParam->memory), int(runParam->memory_swap));
+  sprintf(cmd, string_utils::join(cmdList, " ").data(), runParam->id.data(),
+          runParam->id.data(), int(runParam->memory),
+          int(runParam->memory_swap));
   system(cmd);
 }
 
@@ -163,8 +175,8 @@ int doContainer(void *arg_param) {
   //   cerr << "mount busyBox error" << getErr() << endl;
   //   exit(-1);
   // }
-  string privotRootName = ".pivot_root" + runParam->id;
-  string privotRoot = containerMerge + "/" + privotRootName;
+  string privot_root_name = ".pivot_root" + runParam->id;
+  string privotRoot = containerMerge + "/" + privot_root_name;
   // mount busyBox 3. mkdir put_old
   if (mkdir(privotRoot.data(), 0777)) {
     cerr << "mkdir privotRoot error" << getErr() << endl;
@@ -180,13 +192,14 @@ int doContainer(void *arg_param) {
     cerr << "chdir to / error" << getErr() << endl;
     exit(-1);
   }
+  pre_umount_privot(runParam, privot_root_name);
   // mount busyBox 6. unmount .privot_root
-  if (umount2(("/" + privotRootName).data(), MNT_DETACH)) {
+  if (umount2(("/" + privot_root_name).data(), MNT_DETACH)) {
     cerr << "unmount .pivot_root  error " << getErr() << endl;
     exit(-1);
   }
   // mount busyBox 7. delete dir
-  if (rmdir(("/" + privotRootName).data())) {
+  if (rmdir(("/" + privot_root_name).data())) {
     cerr << "rm .pivot_root  error " << getErr() << endl;
     exit(-1);
   }
@@ -201,7 +214,8 @@ int doContainer(void *arg_param) {
   if (runParam->image == "busybox") {
     vector<string> v = runParam->exec;
     cout << "container begin: " << string_utils::join(v, " ") << endl;
-    return execl("/bin/sh", "sh", "-c", string_utils::join(v, " ").data(), NULL);
+    return execl("/bin/sh", "sh", "-c", string_utils::join(v, " ").data(),
+                 NULL);
   } else {
     cerr << "could not find image '" << runParam->image
          << "', you can use image 'busybox'" << endl;

@@ -9,4 +9,17 @@ class string_utils {
     }
     return res;
   }
+
+  static vector<string> split(const string s, const char split) {
+    vector<string> res;
+    res.push_back("");
+    for (char ch : s) {
+      if (ch == split) {
+        res.push_back("");
+      } else {
+        res.back().push_back(ch);
+      }
+    }
+    return res;
+  }
 };
