@@ -65,7 +65,7 @@ void prepareContainer(run_param *runParam) {
   vector<string> cmdList = {"cd /sys/fs/cgroup/cpu ", "&& mkdir %s ",
                             "&& cd %s ", "&& echo %d > cpu.cfs_quota_us ",
                             "&& echo 50000 > cpu.cfs_period_us "};
-  sprintf(cmd, stringUtils::join(cmdList, " ").data(),
+  sprintf(cmd, string_utils::join(cmdList, " ").data(),
           runParam->id.data(), runParam->id.data(),
           int(runParam->cpus * 50000));
   system(cmd);
@@ -74,7 +74,7 @@ void prepareContainer(run_param *runParam) {
   cmdList = {"cd /sys/fs/cgroup/memory ", "&& mkdir %s ", "&& cd %s ",
              "&& echo %d > memory.limit_in_bytes ",
              "&& echo %d > memory.memsw.limit_in_bytes "};
-  sprintf(cmd, stringUtils::join(cmdList, " ").data(),
+  sprintf(cmd, string_utils::join(cmdList, " ").data(),
           runParam->id.data(), runParam->id.data(),
           int(runParam->memory), int(runParam->memory_swap));
   system(cmd);
@@ -200,8 +200,8 @@ int doContainer(void *arg_param) {
 
   if (runParam->image == "busybox") {
     vector<string> v = runParam->exec;
-    cout << "container begin: " << stringUtils::join(v, " ") << endl;
-    return execl("/bin/sh", "sh", "-c", stringUtils::join(v, " ").data(), NULL);
+    cout << "container begin: " << string_utils::join(v, " ") << endl;
+    return execl("/bin/sh", "sh", "-c", string_utils::join(v, " ").data(), NULL);
   } else {
     cerr << "could not find image '" << runParam->image
          << "', you can use image 'busybox'" << endl;
@@ -210,7 +210,7 @@ int doContainer(void *arg_param) {
 }
 
 int main(int argc, char *argv[]) {
-  param *arg_param = ParamParse::parse(argc, argv);
+  param *arg_param = param_parse::parse(argc, argv);
 
   void *stack = malloc(FIBER_STACK);  //为子进程申请系统堆栈
 

@@ -11,7 +11,7 @@ param *param_parse::parse(int argc, char *argv[]) {
   }
 
   if (argv[1] == string("run")) {
-    return RunParamParse::parse(argc, argv);
+    return run_param_parse::parse(argc, argv);
   } else {
     std::cerr << "unsupport command: '" << argv[1] << "'" << std::endl;
     std::cerr << "please use: " << argv[0] << " run --help" << std::endl;

@@ -12,6 +12,6 @@ class parse_utils {
       exit(-1);
     }
     memory.pop_back();
-    return ObjUtils::stringToInt(memory) << 20;
+    return obj_utils::string_to_int(memory) << 20;
   }
 };
